@@ -17,7 +17,7 @@ import scripts.data.Vars;
 import java.awt.*;
 import java.util.Arrays;
 
-@TribotScriptManifest(name = "A Cooks Tutorial", author = "SkrrtNick", category = "Quest", description = "Completes Cooks Assistant")
+@TribotScriptManifest(name = "A Cooks Tutorial", author = "SkrrtNick", category = "qDev", description = "Completes Cooks Assistant")
 public class ACooksTutorial implements TribotScript {
 
     @Override
@@ -27,7 +27,7 @@ public class ACooksTutorial implements TribotScript {
     }
 
     @Override
-    public void execute(final String args) {
+    public Object execute(final String args) {
         PaintTextRow runningPaintTemplate =
                 PaintTextRow.builder()
                 .background(new Color(120, 123, 128, 180)) // this is the bg colour for our rows
@@ -43,6 +43,10 @@ public class ACooksTutorial implements TribotScript {
                 .location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
                 .build();
         Painting.addPaint(i -> paint.render(i)); // this is the most important part of painting, actually doing the rendering
+
+
+
+
         while (Vars.get().isRunning()) {
 
             if (Vars.get().getCurrentIngredient() == null || Vars.get().getCurrentIngredient().hasIngredient()) {
@@ -61,6 +65,7 @@ public class ACooksTutorial implements TribotScript {
 
             Waiting.waitUniform(20, 40); // we need this sleep here to prevent iterating too quickly
         }
+        return null;
     }
 
 }
