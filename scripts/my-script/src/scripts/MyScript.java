@@ -4,6 +4,7 @@ import org.tribot.script.sdk.input.Keyboard;
 import org.tribot.script.sdk.painting.Painting;
 import org.tribot.script.sdk.painting.template.basic.*;
 import org.tribot.script.sdk.query.Query;
+import org.tribot.script.sdk.script.ScriptConfig;
 import org.tribot.script.sdk.script.TribotScript;
 import org.tribot.script.sdk.script.TribotScriptManifest;
 import org.tribot.script.sdk.types.Area;
@@ -20,12 +21,21 @@ import java.util.function.BooleanSupplier;
 import java.util.Random;
 
 
-@TribotScriptManifest(name = "[Iron]MotherlodeMine", author = "Amorphous", category = "qDev", description = "MotherLode mining script")
+@TribotScriptManifest(name = "[WALL-E] MotherlodeMine", author = "Amorphous", category = "qDev", description = "MotherLode mining script")
 public class MyScript implements TribotScript {
+
 
 	@Override
 	@SuppressWarnings("InfiniteLoopStatement")
 	public void execute(final String args) {
+
+		ScriptConfig config = new ScriptConfig();
+		config.setRandomsAndLoginHandlerEnabled(true);
+		Log.debug("config = " + config.isRandomsAndLoginHandlerEnabled());
+
+		config.setBreakHandlerEnabled(true);
+		Log.debug(config.isBreakHandlerEnabled());
+
 
 		// before anything else, import classes!
 		Travel travel = new Travel();
@@ -89,7 +99,7 @@ public class MyScript implements TribotScript {
 
 		if(!args.isEmpty()){
 			Log.info(args);
-			String[] myArgs = retrieveArgs(args);
+			String[] myArgs = info.retrieveArgs(args);
 			Log.debug("myARgs = " + myArgs[0] + myArgs[1]);
 			userHasUnlockedLargerOreSack = Boolean.parseBoolean(myArgs[0]);			// the first argument will be the oreSackCount
 			Log.debug(userHasUnlockedLargerOreSack);
@@ -110,21 +120,21 @@ public class MyScript implements TribotScript {
 
 		Camera.setZoomPercent(0);
 
-		Optional<InventoryItem> payDirtExistsInSatchel = itemExistsInSatchel("Pay-dirt");
-		Optional<InventoryItem> oreExistsInSatchel = itemExistsInSatchel("ore");
-		Optional<InventoryItem> coalExistsInSatchel = itemExistsInSatchel("Coal");
-		Optional<InventoryItem> nuggetExistsInSatchel = itemExistsInSatchel("Golden nugget");
-		Optional<InventoryItem> gemsExistInSatchel = itemExistsInSatchel("Uncut");
-		Optional<InventoryItem> theHammerHolster = hasHammer();
+		Optional<InventoryItem> payDirtExistsInSatchel = info.itemExistsInSatchel("Pay-dirt");
+		Optional<InventoryItem> oreExistsInSatchel = info.itemExistsInSatchel("ore");
+		Optional<InventoryItem> coalExistsInSatchel = info.itemExistsInSatchel("Coal");
+		Optional<InventoryItem> nuggetExistsInSatchel = info.itemExistsInSatchel("Golden nugget");
+		Optional<InventoryItem> gemsExistInSatchel = info.itemExistsInSatchel("Uncut");
+		Optional<InventoryItem> theHammerHolster = info.hasHammer();
 
 
 		if(theHammerHolster.isEmpty()) {
 			Log.trace("Walking to the crate to get a hammer");
 			travel.walkToHammerCrate();
-			grabHammerFromCrate();
+			mactions.grabHammerFromCrate();
 
 			while(theHammerHolster.isEmpty()) {
-				theHammerHolster = hasHammer();
+				theHammerHolster = info.hasHammer();
 				Waiting.waitNormal(1000,635);
 			}
 			Log.info("We have obtained a hammer");
@@ -134,9 +144,9 @@ public class MyScript implements TribotScript {
 			Log.warn("Pay dirt from a previous run exists. Let's deposit it in the hopper.");
 			travel.checkIfWeShouldRun();
 			travel.getToTheHopper();
-			washOresInHopper();
+			mactions.washOresInHopper();
 			Log.trace("Pay dirt deposited");
-			strutInquiry(travel);
+			strutHandler.strutFixer(travel);
 			travel.checkIfWeShouldRun();
 		}
 
@@ -149,7 +159,7 @@ public class MyScript implements TribotScript {
 
 			Log.warn("Ore / Gems / Nuggets detected in inventory. Walking to bank.");
 			travel.walkToDepositBin();
-			BooleanSupplier bankIsOpen = this::openDepositBin;
+			BooleanSupplier bankIsOpen = mactions::openDepositBin;
 			Waiting.waitUntil(bankIsOpen);
 
 			while (!Bank.isDepositBoxOpen()){
@@ -157,7 +167,7 @@ public class MyScript implements TribotScript {
 				Log.debug("Bank is not open");
 			}
 
-			depositOresAndGems();
+			mactions.depositOresAndGems();
 			Waiting.waitNormal(1000,67);
 		}
 
@@ -173,7 +183,7 @@ public class MyScript implements TribotScript {
 			if(currentDurationInMinutes > 0) {
 				gainedMiningXP = (int)(Skill.MINING.getXp() - startingMiningXP);
 				xpPerHour = (int)((gainedMiningXP / currentDurationInMinutes) * 60);
-				getSessionStats(currentDurationInMinutes, gainedMiningXP, xpPerHour);
+				info.getSessionStats(currentDurationInMinutes, gainedMiningXP, xpPerHour);
 
 			}
 
@@ -227,9 +237,9 @@ public class MyScript implements TribotScript {
 				Log.debug("The ore sack is very full. Let's go deal with that first");
 				travel.getToTheHopper();
 				Log.debug("But lets wash these first.");
-				washOresInHopper();
+				mactions.washOresInHopper();
 
-				processOresInSack(travel);
+				mactions.processOresInSack(travel);
 				Log.info("Ore sack has been cleaned out.");
 			}
 			else if (inventoryCount != 28) {
@@ -253,7 +263,7 @@ public class MyScript implements TribotScript {
 						if (LocalWalking.walkTo(lowerLadder.getCenter()) && Waiting.waitUntil(lowerLadder::containsMyPlayer)) {
 							Log.debug("arrived at lower ladder");
 							Waiting.waitNormal(600, 90);
-							BooleanSupplier hasClimbedLadder = this::clickLadder;
+							BooleanSupplier hasClimbedLadder = mactions::clickLadder;
 							Waiting.waitUntil(hasClimbedLadder);
 							Waiting.waitUntil(selectedMine::containsMyPlayer);
 							Waiting.waitNormal(1300,425);
@@ -277,7 +287,7 @@ public class MyScript implements TribotScript {
 				while(Query.inventory().count() < 28) {
 					int currentHopperCount = GameState.getVarbit(5558);
 
-					mine("Ore vein");
+					mactions.mine("Ore vein");
 					Log.trace("You swing your pick at the rock...");
 					Waiting.waitNormal(1000,5);
 					isMining = true;
@@ -322,10 +332,10 @@ public class MyScript implements TribotScript {
 				travel.checkIfWeShouldRun();
 				travel.getToTheHopper();
 
-				BooleanSupplier hasDepositedPayDirt = this::washOresInHopper;
+				BooleanSupplier hasDepositedPayDirt = mactions::washOresInHopper;
 				Waiting.waitUntil(hasDepositedPayDirt);
 				Log.trace("Pay dirt deposited");
-				strutInquiry(travel);
+				strutHandler.strutFixer(travel);
 				travel.checkIfWeShouldRun();
 			}
 

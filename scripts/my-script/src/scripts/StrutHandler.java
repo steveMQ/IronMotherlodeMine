@@ -8,7 +8,7 @@ import java.util.function.BooleanSupplier;
 
 public class StrutHandler {
 
-    private void strutFixer(Travel travel) {
+    void strutFixer(Travel travel) {
 
         Information info = new Information();
         MiningActions mactions = new MiningActions();

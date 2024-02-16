@@ -25,7 +25,7 @@ public class MiningActions {
                 .map(rock -> rock.interact("Mine"));
     }
 
-    private Boolean washOresInHopper() {
+    Boolean washOresInHopper() {
         Boolean request = Query.gameObjects()
                 .nameEquals("Hopper")
                 .findClosest()
@@ -53,7 +53,7 @@ public class MiningActions {
                 .orElse(false);
     }
 
-    private void depositOresAndGems() {
+    void depositOresAndGems() {
 
         Waiting.waitNormal(600, 5);
 
@@ -165,7 +165,7 @@ public class MiningActions {
                 .orElse(false);
     }
 
-    private boolean openDepositBin() {
+    boolean openDepositBin() {
         return Query.gameObjects()
                 .nameEquals("Bank deposit box")
                 .findClosest()

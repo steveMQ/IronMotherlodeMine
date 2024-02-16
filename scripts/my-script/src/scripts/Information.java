@@ -19,11 +19,11 @@ public class Information {
                 .isPresent();
     }
 
-    private Optional<InventoryItem> itemExistsInSatchel(String itemName) {
+    Optional<InventoryItem> itemExistsInSatchel(String itemName) {
         return Query.inventory().nameContains(itemName).findFirst();
     }
 
-    private Optional<InventoryItem> hasHammer(){
+    Optional<InventoryItem> hasHammer(){
         return Query.inventory().nameContains("hammer").findFirst();
     }
 
@@ -37,7 +37,7 @@ public class Information {
         return (int) Arrays.stream(matches).count();
     }
 
-    private void getSessionStats(int a, int b, int c) {
+    void getSessionStats(int a, int b, int c) {
         Log.info("-------------------------");
         Log.warn("Runtime: " + a + " m" );
         Log.warn("XP: " + (b/1000) + "k");
@@ -46,7 +46,7 @@ public class Information {
     }
 
 
-    private String[] retrieveArgs(String args){
+    String[] retrieveArgs(String args){
         return args.split(",");
     }
 
