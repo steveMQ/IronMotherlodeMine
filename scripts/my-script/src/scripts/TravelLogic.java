@@ -91,7 +91,7 @@ public class TravelLogic {
         }
     }
 
-    boolean walkToTheGrandExchange() {
+    static boolean walkToTheGrandExchange() {
         final Area GrandExchange = Area.fromRadius(new WorldTile(3164, 3481, 0), 3);
         return GlobalWalking.walkTo(GrandExchange.getCenter()) && Waiting.waitUntil(GrandExchange::containsMyPlayer);
     }
