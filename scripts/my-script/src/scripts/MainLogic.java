@@ -13,6 +13,7 @@ import org.tribot.script.sdk.types.WorldTile;
 import org.tribot.script.sdk.Bank;
 import org.tribot.script.sdk.walking.LocalWalking;
 
+import javax.swing.text.html.Option;
 import java.awt.*;
 import java.util.Arrays;
 import java.util.ArrayList;
@@ -20,9 +21,11 @@ import java.util.Optional;
 import java.util.function.BooleanSupplier;
 import java.util.Random;
 
+import static java.lang.Boolean.parseBoolean;
+
 
 @TribotScriptManifest(name = "[WALL-E] MotherlodeMine", author = "Amorphous", category = "qDev", description = "MotherLode mining script")
-public class MyScript implements TribotScript {
+public class MainLogic implements TribotScript {
 
 
 	@Override
@@ -38,10 +41,11 @@ public class MyScript implements TribotScript {
 
 
 		// before anything else, import classes!
-		Travel travel = new Travel();
+		TravelLogic travel = new TravelLogic();
 		Information info = new Information();
 		MiningActions mactions = new MiningActions();
 		StrutHandler strutHandler = new StrutHandler();
+
 
 		double scriptStartTime = System.currentTimeMillis();
 		double worldStartTime = System.currentTimeMillis();
@@ -65,46 +69,29 @@ public class MyScript implements TribotScript {
 		double startingMiningXP = Skill.MINING.getXp();
 		Log.trace("Setting the starting mining XP to " + startingMiningXP);
 
-
-		PaintTextRow template = PaintTextRow.builder().background(Color.green.darker()).build();
-		// template is optional stuff to not repeat same colors/fonts for every row
-
-		BasicPaintTemplate paint = BasicPaintTemplate.builder()
-				.row(PaintRows.scriptName(template.toBuilder()))
-				.row(PaintRows.runtime(template.toBuilder()))
-				//.row(template.toBuilder().label("Test").value("ing").onClick(() -> Log.log("CLICKED!")).build())
-				.row(template.toBuilder().label("XP/hr").value(() -> {
-					double bignum = (3600000);
-					double divisor = (System.currentTimeMillis() - scriptStartTime) / bignum;
-					divisor = divisor * 1000;
-					String output = String.valueOf(Math.round((Skill.MINING.getXp() - startingMiningXP) / divisor));
-					return output + "k";
-				}).build())
-				.row(template.toBuilder().label("TTL:").value(() -> {
-					double bignum = (3600000);
-					double divisor = (System.currentTimeMillis() - scriptStartTime) / bignum;
-					divisor = divisor * 1000;
-					double hourlyXP = Math.round((Skill.MINING.getXp() - startingMiningXP) / divisor);
-					double nextLevel = Skill.MINING.getCurrentXpToNextLevel();
-					double timeToNextLevel = (nextLevel / hourlyXP) / 1000;
-					return String.format("%.2f",timeToNextLevel).concat(" hrs");
-				}).build())
-				.location(PaintLocation.BOTTOM_LEFT_VIEWPORT)
-				.build();
-		Painting.addPaint(paint::render);
-		Log.debug("Paint initialized");
+		// this makes the pain look nice
+		PaintBuilder paintbuilder = new PaintBuilder(startingMiningXP, scriptStartTime);
 
 		// theres an issue with the input and whitespace
 		// if the input is such that --> "false, true", that space between fucks it up.
-
 		if(!args.isEmpty()){
 			Log.info(args);
 			String[] myArgs = info.retrieveArgs(args);
 			Log.debug("myARgs = " + myArgs[0] + myArgs[1]);
-			userHasUnlockedLargerOreSack = Boolean.parseBoolean(myArgs[0]);			// the first argument will be the oreSackCount
+			userHasUnlockedLargerOreSack = parseBoolean(myArgs[0]);			// the first argument will be the oreSackCount
 			Log.debug(userHasUnlockedLargerOreSack);
-			userHasUnlockedUpperMine = Boolean.parseBoolean(myArgs[1]);			// second argument is a boolean, to check if the upper mine is unlocked
+			userHasUnlockedUpperMine = parseBoolean(myArgs[1]);			// second argument is a boolean, to check if the upper mine is unlocked
 			Log.debug(userHasUnlockedUpperMine);
+
+			Optional<Boolean> shouldTrainMiningBeforeMLM = Optional.of(parseBoolean(myArgs[2]));
+
+			if(shouldTrainMiningBeforeMLM.isPresent()){
+				Log.debug("You found the hidden functionality! Lets go train some fucking mining.");
+
+				AccountBuilder ab = new AccountBuilder();
+				return;
+			}
+
 		}
 
 
@@ -287,31 +274,19 @@ public class MyScript implements TribotScript {
 				while(Query.inventory().count() < 28) {
 					int currentHopperCount = GameState.getVarbit(5558);
 
-					mactions.mine("Ore vein");
+					MiningActions.mine("Ore vein");
 					Log.trace("You swing your pick at the rock...");
 					Waiting.waitNormal(1000,5);
 					isMining = true;
 
-					while(isMining){
-						isMining = MyPlayer.isAnimating();
-						Waiting.wait(600);
-						if(!isMining) {
-							Waiting.waitNormal(600, 25);
-							isMining = MyPlayer.isAnimating();
-							if(!isMining) {
-								Waiting.waitNormal(600, 25);
-								isMining = MyPlayer.isAnimating();
-								if(!isMining) {
-									Waiting.waitNormal(600, 25);
-									isMining = MyPlayer.isAnimating();
-									if(!isMining) {
-										Waiting.waitNormal(600, 25);
-									}
-								}
-							}
-						}
-					}
+					// this is a sluice for 5 consecutive game ticks
+					// animations toggle between mining and not mining, while actually mining
+					// if character is not animating for 5 consecutive ticks, they are idle
+					// and the process escapes the sluice
+					MiningActions.playerIsMiningValidator(600);
+
 					inventoryCount = Query.inventory().count();
+					Log.debug("Ore depleted");
 				}
 			}
 

@@ -1,9 +1,6 @@
 package scripts;
 
-import org.tribot.script.sdk.Bank;
-import org.tribot.script.sdk.GameState;
-import org.tribot.script.sdk.Log;
-import org.tribot.script.sdk.Waiting;
+import org.tribot.script.sdk.*;
 import org.tribot.script.sdk.input.Keyboard;
 import org.tribot.script.sdk.query.Query;
 
@@ -18,11 +15,12 @@ public class MiningActions {
                 .map(crate -> crate.interact("Search"));
     }
 
-     void mine(String oreName) {
-        Query.gameObjects()
+     static boolean mine(String oreName) {
+        return Query.gameObjects()
                 .nameEquals(oreName)
                 .findBestInteractable()
-                .map(rock -> rock.interact("Mine"));
+                .map(rock -> rock.interact("Mine"))
+                .orElse(false);
     }
 
     Boolean washOresInHopper() {
@@ -45,6 +43,10 @@ public class MiningActions {
 
     }
 
+    public static void getPickaxe(String name) {
+        Bank.withdraw(name, 1);
+    }
+
     Boolean clickedStruts() {
         return Query.gameObjects()
                 .actionEquals("Hammer")
@@ -53,7 +55,7 @@ public class MiningActions {
                 .orElse(false);
     }
 
-    void depositOresAndGems() {
+    static void depositOresAndGems() {
 
         Waiting.waitNormal(600, 5);
 
@@ -90,6 +92,21 @@ public class MiningActions {
             Waiting.waitNormal(600, 5);
         }
 
+        if(Query.inventory().nameContains("Iron").isAny()){
+            Bank.depositAll("Iron");
+            Waiting.waitNormal(600, 5);
+        }
+
+        if(Query.inventory().nameContains("Tin").isAny()){
+            Bank.depositAll("Tin");
+            Waiting.waitNormal(600, 5);
+        }
+
+        if(Query.inventory().nameContains("Copper").isAny()){
+            Bank.depositAll("Copper");
+            Waiting.waitNormal(600, 5);
+        }
+
         if(Query.inventory().nameContains("ruby").isAny()){
             Bank.depositAll("uncut ruby");
             Waiting.waitNormal(600, 5);
@@ -109,6 +126,7 @@ public class MiningActions {
             Bank.depositAll("uncut diamond");
             Waiting.waitNormal(600, 5);
         }
+        Waiting.waitNormal(2000,760);
     }
 
     void removeRockfall() {
@@ -118,7 +136,7 @@ public class MiningActions {
                 .map(rockfall -> rockfall.interact("Mine"));
     }
 
-    public void processOresInSack(Travel travel) {
+    public void processOresInSack(TravelLogic travel) {
         int hopperCount = GameState.getVarbit(5558);
 
         while(hopperCount != 0) {
@@ -126,7 +144,7 @@ public class MiningActions {
             BooleanSupplier arrivedAtOreSack = travel::getToTheOreSack;
             Waiting.waitUntil(arrivedAtOreSack);
             Log.debug("arrived at ore sack");
-            Waiting.waitNormal(1500, 350);
+            Waiting.waitNormal(3000, 350);
 
             BooleanSupplier oreSackOpened= this::searchOreSack;
             Waiting.waitUntil(oreSackOpened);
@@ -173,7 +191,38 @@ public class MiningActions {
                 .orElse(false);
     }
 
+    static boolean openBankWindow() {
+        return Query.gameObjects()
+                .nameEquals("Bank booth")
+                .findClosest()
+                .map(banker -> banker.interact("Bank"))
+                .orElse(false);
+    }
 
+    public static void playerIsMiningValidator(int timeInMillis) {
+
+        boolean isMining = true;
+
+        while(isMining){
+            isMining = MyPlayer.isAnimating();
+            Waiting.wait(timeInMillis);
+            if(!isMining) {
+                Waiting.waitNormal(timeInMillis, 25);
+                isMining = MyPlayer.isAnimating();
+                if(!isMining) {
+                    Waiting.waitNormal(timeInMillis, 25);
+                    isMining = MyPlayer.isAnimating();
+                    if(!isMining) {
+                        Waiting.waitNormal(timeInMillis, 25);
+                        isMining = MyPlayer.isAnimating();
+                        if(!isMining) {
+                            Waiting.waitNormal(timeInMillis, 25);
+                        }
+                    }
+                }
+            }
+        }
+    }
 
 
 

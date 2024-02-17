@@ -1,8 +1,11 @@
 package scripts;
 
 import org.tribot.script.sdk.Log;
+import org.tribot.script.sdk.Skill;
+import org.tribot.script.sdk.interfaces.Item;
 import org.tribot.script.sdk.query.Query;
 import org.tribot.script.sdk.types.Area;
+import org.tribot.script.sdk.types.EquipmentItem;
 import org.tribot.script.sdk.types.InventoryItem;
 import org.tribot.script.sdk.types.WorldTile;
 
@@ -26,6 +29,16 @@ public class Information {
     Optional<InventoryItem> hasHammer(){
         return Query.inventory().nameContains("hammer").findFirst();
     }
+
+    static boolean hasPickaxeInInventory(){
+        return Query.inventory().nameContains("pickaxe").isAny();
+    }
+
+    static boolean hasPickaxeInBank(String name){ return Query.bank().nameContains(name).isAny();
+    }
+
+
+   static boolean hasPickaxeEquipped(){return Query.equipment().nameContains("pickaxe").isAny();}
 
     Boolean checkForBrokenStruts() {
         return Query.gameObjects().actionEquals("Hammer").findClosest().isPresent();

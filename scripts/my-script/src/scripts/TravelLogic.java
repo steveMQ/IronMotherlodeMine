@@ -1,21 +1,25 @@
 package scripts;
 
-import org.tribot.script.sdk.Log;
-import org.tribot.script.sdk.MyPlayer;
-import org.tribot.script.sdk.Options;
-import org.tribot.script.sdk.Waiting;
+import org.tribot.script.sdk.*;
+import org.tribot.script.sdk.interfaces.Positionable;
 import org.tribot.script.sdk.types.Area;
 import org.tribot.script.sdk.types.WorldTile;
+import org.tribot.script.sdk.walking.GlobalWalking;
 import org.tribot.script.sdk.walking.LocalWalking;
 
 import java.util.function.BooleanSupplier;
 
-public class Travel {
+public class TravelLogic {
 
     Information info = new Information();
     MiningActions mactions = new MiningActions();
 
-    void checkIfWeShouldRun() {
+    InterfaceActions ia = new InterfaceActions();
+
+    ImportantLocations importantLocations = new ImportantLocations();
+
+
+    static void checkIfWeShouldRun() {
         if(MyPlayer.getRunEnergy() > 40 && !Options.isRunEnabled()) {
             Log.info("Energy is " + MyPlayer.getRunEnergy() + ", RUN enabled!");
             Options.setRunEnabled(true);
@@ -41,7 +45,7 @@ public class Travel {
     }
 
     boolean getToTheOreSack() {
-        final Area MOTHERLODE_SACK = Area.fromRadius(new WorldTile(3749, 5659, -1), 3);
+        final Area MOTHERLODE_SACK = Area.fromRadius(new WorldTile(3748, 5657, -1), 1);
         return LocalWalking.walkTo(MOTHERLODE_SACK.getCenter()) && Waiting.waitUntil(MOTHERLODE_SACK::containsMyPlayer);
     }
 
@@ -54,10 +58,10 @@ public class Travel {
             // this is basically anywhere on the upper floor
             if(
                     Area.fromRadius(new WorldTile(3761, 5678, -1), 5).containsMyPlayer() ||
-                            Area.fromRadius(new WorldTile(3761, 5673, -1), 5).containsMyPlayer() ||
-                            Area.fromRadius(new WorldTile(3753, 5683, -1), 6).containsMyPlayer() ||
-                            Area.fromRadius(new WorldTile(3755, 5676, -1), 5).containsMyPlayer() ||
-                            Area.fromRadius(new WorldTile(3759, 5683, -1), 5).containsMyPlayer()
+                    Area.fromRadius(new WorldTile(3761, 5673, -1), 5).containsMyPlayer() ||
+                    Area.fromRadius(new WorldTile(3753, 5683, -1), 6).containsMyPlayer() ||
+                    Area.fromRadius(new WorldTile(3755, 5676, -1), 5).containsMyPlayer() ||
+                    Area.fromRadius(new WorldTile(3759, 5683, -1), 5).containsMyPlayer()
             ){
                 Log.info("We are on the upper level. Be on the lockout for rockfall in the way");
 
@@ -85,6 +89,39 @@ public class Travel {
                 Waiting.waitUntil(MOTHERLODE_HOPPER::containsMyPlayer);
             }
         }
+    }
+
+    boolean walkToTheGrandExchange() {
+        final Area GrandExchange = Area.fromRadius(new WorldTile(3164, 3481, 0), 3);
+        return GlobalWalking.walkTo(GrandExchange.getCenter()) && Waiting.waitUntil(GrandExchange::containsMyPlayer);
+    }
+
+    static boolean walkToVarrockEastMine() {
+        return Waiting.waitUntil(() ->
+                GlobalWalking.walkTo(ImportantLocations.VarrockEastMine.getCenter()) &&
+                ImportantLocations.VarrockEastMine.containsMyPlayer()
+                );
+    }
+
+   boolean homeTeleToLumbridge() {
+        boolean magicTabIsOpen = ia.openMagicTab();
+        Waiting.waitUntil(() -> magicTabIsOpen);
+        Log.debug("Tab is open.");
+        return Waiting.waitUntil(() -> Magic.selectSpell("Lumbridge Home Teleport"));
+   }
+
+    boolean goHome() {
+
+        boolean clickedLumbyHomeSpell = this.homeTeleToLumbridge();
+        Waiting.waitUntil(() -> clickedLumbyHomeSpell);
+
+        return Waiting.waitUntil((ImportantLocations.LumbridgeSpawn::containsMyPlayer));
+
+    }
+
+    static boolean walkToVarrockEastBank() {
+        return GlobalWalking.walkTo(ImportantLocations.VarrockEastBank.getCenter()) &&
+               Waiting.waitUntil(ImportantLocations.VarrockEastBank::containsMyPlayer);
     }
 
 }
